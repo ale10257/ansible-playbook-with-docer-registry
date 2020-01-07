@@ -1,0 +1,9 @@
+#!/bin/bash
+
+DIR=/etc/letsencrypt/live/{{ registry_host }}
+
+if [[ -d $DIR ]]; then
+  cd $DIR
+  cp privkey.pem {{ registry_host }}.key
+  cat cert.pem chain.pem > {{ registry_host }}.crt
+fi

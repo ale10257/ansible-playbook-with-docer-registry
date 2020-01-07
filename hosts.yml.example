@@ -1,0 +1,24 @@
+all:
+    children:
+        site:
+            hosts:
+                server:
+                    ansible_connection: ssh
+                    ansible_user: root
+                    ansible_host: 0.0.0.0
+                    ansible_port: 22
+            vars:
+                registry_user: registry_user
+                registry_password: secret
+                registry_work_dir: docker-registry
+                registry_host: registry.example.com
+                registry_port: 5000
+                deploy_user: deploy_user
+                users:
+                    - '{{ registry_user }}'
+                    - '{{ deploy_user }}'
+                site_hosts:
+                    - '{{ registry_host }}'
+                    - frontend.example.com
+                    - api.example.com
+                certbot_email: user@gmail.com

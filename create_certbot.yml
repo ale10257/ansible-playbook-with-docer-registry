@@ -1,0 +1,57 @@
+---
+-   name: Create users
+    hosts: site
+    remote_user: root
+    tasks:
+        -   name: Update apt packages
+            apt:
+                update_cache: yes
+
+        -   name: Add Certbot repository
+            apt_repository:
+                repo: 'ppa:certbot/certbot'
+                state: present
+                update_cache: yes
+
+        -   name: Install Certbot
+            apt:
+                name: certbot
+                state: present
+                update_cache: yes
+
+        -   name: Copy Certbot configuration
+            template:
+                src: templates/cli.ini
+                dest: /etc/letsencrypt/cli.ini
+
+        -   name: Copy registy hook
+            template:
+                src: registry.sh.j2
+                dest: /etc/letsencrypt/registry.sh
+                mode: 'u+x,g+x'
+
+        -   name: Remove useless packages
+            apt:
+                autoclean: yes
+
+        -   name: Remove useless dependencies
+            apt:
+                autoremove: yes
+
+        -   name: Check if certificate already exists
+            stat:
+                path: /etc/letsencrypt/live/{{ item }}/cert.pem
+            register: letsencrypt_certs
+            with_items: "{{ site_hosts }}"
+
+        -   name: Up certbot standalone Apache
+            shell: "docker run -d --name apache -v /var/www/html:/usr/local/apache2/htdocs/ -p 80:80 httpd:2.4 || true"
+
+        -   name: Generate new certificate
+            shell: "certbot certonly --noninteractive --agree-tos --email {{ certbot_email }} -d {{ item.item }}"
+            with_items: "{{ letsencrypt_certs.results }}"
+            when: not item.stat.exists
+
+        -   name: Down certbot Apache
+            shell: "docker rm -f apache || true"
+

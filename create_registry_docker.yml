@@ -1,0 +1,42 @@
+---
+-   name: Create registry docker
+    hosts: site
+    remote_user: root
+    tasks:
+        -   name: Update apt packages
+            apt:
+                update_cache: yes
+
+        -   name: Install htpasswd
+            apt:
+                name: apache2-utils
+                state: present
+                update_cache: yes
+
+        -   name: ansible create directory
+            become: yes
+            become_user: registry
+            file:
+                path: "{{ item }}"
+                state: directory
+            with_items:
+                - '~/{{ registry_work_dir }}/auth'
+                - '~/{{ registry_work_dir }}/data'
+
+        -   name: Create htpasswd
+            become: yes
+            become_user: registry
+            shell: "cd ~/{{ registry_work_dir }}/auth && htpasswd -Bcb password {{ registry_user }} {{ registry_password }}"
+
+        -   name: Copy docker-compose.yml
+            become: yes
+            become_user: registry
+            template:
+                src=templates/docker-compose.yml.j2
+                dest=~/{{ registry_work_dir }}/docker-compose.yml
+
+        -   name: Start registry
+            become: yes
+            become_user: registry
+            shell: "cd ~/{{ registry_work_dir }} && docker-compose up -d"
+

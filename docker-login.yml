@@ -1,0 +1,9 @@
+---
+-   name: Login docker
+    hosts: site
+    remote_user: root
+    become: yes
+    become_user: '{{ deploy_user }}'
+    tasks:
+        -   name: Log into private registry
+            shell: "docker login -u {{ registry_user }} -p {{ registry_password }} {{ registry_host }}:{{ registry_port }}"
